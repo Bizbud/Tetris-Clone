@@ -212,9 +212,9 @@ int main()
                         testRect.x = (currentBlock->x + x) * 50;
                         testRect.y = (currentBlock->y + y) * 50;
                             
-                        //SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
+                        SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
 
-                        //grid[currentBlock->x + x][currentBlock->y + y] = true;
+                        grid[currentBlock->y + y][currentBlock->x + x] = true;
                     }
                 }
             }
