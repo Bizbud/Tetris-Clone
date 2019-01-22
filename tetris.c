@@ -17,19 +17,65 @@ bool grid[16][21];
 typedef struct Block
 {
     int x, y;
-    bool squares[4][4];
+    bool squares[4][4][4];
     int r, g, b;
 } Block;
 
-bool L[4][4] = {{false, false, true, false},
-                {false, false, true, false},
-                {false, false, true, false},
-                {false, true, true, false}};
+bool L[4][4][4] = 
+{
+    {
+        {0, 0, 0, 0},
+        {0, 1, 1, 1},
+        {0, 0, 0, 1},
+        {0, 0, 0, 0}
+    },
+    {
+        {0, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 1, 0},
+        {0, 1, 1, 0}
+    },
+    {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}
+    },
+    {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}
+    }
+};
 
-bool S[4][4] = {{false, false, true, true},
-                {false, true, true, false},
-                {false, false, false, false},
-                {false, false, false, false}};
+bool S[4][4][4] = 
+{
+    {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+    },
+    {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}, 
+    },
+    {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}, 
+    },
+    {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}, 
+    }
+};
 
 void newL(Block *current);
 void newS(Block *current);
@@ -41,14 +87,9 @@ int main()
     // Init SDL/Window
     SDL_Init(SDL_INIT_VIDEO);
     
-    window = SDL_CreateWindow(
-        WINDOW_NAME,                       
-        SDL_WINDOWPOS_UNDEFINED,        
-        SDL_WINDOWPOS_UNDEFINED,           
-        WIDTH,                           
-        HEIGHT,                           
-        SDL_WINDOW_MAXIMIZED
-    );
+    window = SDL_CreateWindow(WINDOW_NAME, SDL_WINDOWPOS_UNDEFINED, 
+                                SDL_WINDOWPOS_UNDEFINED, WIDTH, HEIGHT, 
+                                SDL_WINDOW_MAXIMIZED);
     if(window == NULL) 
     {
         printf("Could not create window: %s\n", SDL_GetError());
@@ -69,17 +110,40 @@ int main()
     Block *currentBlock = malloc(sizeof(Block));
     newL(currentBlock);
 
+    // Set base collisions
+    for(int i = 0; i < 16; i++)
+    {
+        grid[i][19] = true;
+    }
+
+    for(int i = 0; i < 21; i++)
+    {
+        grid[0][i] = true;
+    }
+
+    // Test
+    /*for(int x = 0; x < 4; x++)
+    {
+        for(int y = 0; y < 4; y++)
+        {
+            if(L[x][y])
+            {
+                testRect.x = (4 + x) * 50;
+                testRect.y = (4 + y) * 50;
+
+                SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, 255, 255, 255));
+            }
+        }
+    }*/
+
 
     bool isRunning = true;
     bool isFalling = true;
-
-    for(int i = 0; i < 16; i++)     // Set base collisions
-    {
-        grid[i][20] = true;
-    }
-
+    int currentRotation = 0;
     const Uint8 *keys = SDL_GetKeyboardState(NULL);
     SDL_Event event;
+
+    // Game loop
     while(isRunning)
     {
         while(SDL_PollEvent(&event)) 
@@ -91,6 +155,9 @@ int main()
             }
         }
 
+        // Check collision
+        bool canMoveLeft = true;
+        bool canMoveRight = true;
         for(int x = 0; x < 4; x++)
         {
             for(int y = 0; y < 4; y++)
@@ -98,102 +165,93 @@ int main()
                 int realX = currentBlock->x + x;
                 int realY = currentBlock->y + y;
 
+                if(!grid[realX + 1][realY])
+                {
+                    canMoveRight = true;
+                }
+                else
+                {
+                    canMoveRight = false;
+                }
+                if(!grid[realX - 1][ realY])
+                {
+                    canMoveLeft = true;
+                }
+                else
+                {
+                    canMoveLeft = false;
+                }
+
                 if(grid[realX][realY + 1])
                 {
                     isFalling = false;
-                    goto FINISH;
+                    goto RENDER;
                 }
             }
         }
 
-        if(keys[SDL_SCANCODE_D])
+        if(keys[SDL_SCANCODE_D] && canMoveRight && canMoveLeft)
         {
             currentBlock->x += 1;
         }
-        else if(keys[SDL_SCANCODE_A])
+        else if(keys[SDL_SCANCODE_A] && canMoveLeft && canMoveRight)
         {
             currentBlock->x -= 1;
         }
         currentBlock->y += 1;
-        printf("y: %d\n", currentBlock->y + 4);
 
-        FINISH:  
-        render(currentBlock);
-    }
-}
+        RENDER:  
 
-int initSDL()
-{
-    SDL_Init(SDL_INIT_VIDEO);
-
-    window = SDL_CreateWindow(
-        WINDOW_NAME,                       
-        SDL_WINDOWPOS_UNDEFINED,        
-        SDL_WINDOWPOS_UNDEFINED,           
-        WIDTH,                           
-        HEIGHT,                           
-        SDL_WINDOW_MAXIMIZED
-    );
-
-    if(window == NULL) 
-    {
-        printf("Could not create window: %s\n", SDL_GetError());
-        return 1;
-    }
-
-    screen = SDL_GetWindowSurface(window);
-    blocks = SDL_CreateRGBSurface(0, WIDTH, HEIGHT, 32, 0, 0, 0, 0);
-    return 0;
-}
-
-int render(Block *currentBlock)
-{
-    SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));        
-    SDL_BlitSurface(blocks, NULL, screen, NULL); 
-    if(isFalling)
-    {
-        for(int x = 0; x < 4; x++)
+        // Render
+        SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));        
+        SDL_BlitSurface(blocks, NULL, screen, NULL); 
+        if(isFalling)
         {
-            for(int y = 0; y < 4; y++)
+            for(int x = 0; x < 4; x++)
             {
-                if(currentBlock->squares[x][y])
+                for(int y = 0; y < 4; y++)
                 {
-                    testRect.x = (currentBlock->x + x) * 50;
-                    testRect.y = (currentBlock->y + y) * 50;
+                    if(currentBlock->squares[y][x][currentRotation])
+                    {
+                        testRect.x = (currentBlock->x + x) * 50;
+                        testRect.y = (currentBlock->y + y) * 50;
 
-                    SDL_FillRect(screen, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
+                        SDL_FillRect(screen, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
+                    }
                 }
             }
         }
-    }
-    else
-    {
-        for(int x = 0; x < 4; x++)
+        else
         {
-            for(int y = 0; y < 4; y++)
+            for(int x = 0; x < 4; x++)
             {
-                if(currentBlock->squares[x][y])
+                for(int y = 0; y < 4; y++)
                 {
-                    testRect.x = (currentBlock->x + x) * 50;
-                    testRect.y = (currentBlock->y + y) * 50;
-                        
-                    SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
+                    if(currentBlock->squares[x][y])
+                    {
+                        testRect.x = (currentBlock->x + x) * 50;
+                        testRect.y = (currentBlock->y + y) * 50;
+                            
+                        SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
 
-                    grid[currentBlock->x + x][currentBlock->y + y] = true;
+                        grid[currentBlock->x + x][currentBlock->y + y] = true;
+                    }
                 }
             }
+            newL(currentBlock);
+            isFalling = true;
         }
-        newL(currentBlock);
-        isFalling = true;
-    }
 
-    for(int i = 0; i < 16; i++)
-    {
-        testRect.x = i * 50;
-        testRect.y = 19 * 50;
-        SDL_FillRect(screen, &testRect, SDL_MapRGB(screen->format, 255, 255, 1));
-    } 
-    SDL_UpdateWindowSurface(window); 
+        for(int i = 0; i < 16; i++)
+        {
+            testRect.x = i * 50;
+            testRect.y = 19 * 50;
+            SDL_FillRect(screen, &testRect, SDL_MapRGB(screen->format, 255, 255, 1));
+        } 
+        SDL_UpdateWindowSurface(window); 
+
+        SDL_Delay(100);
+    }
 }
 
 void newL(Block *current)
