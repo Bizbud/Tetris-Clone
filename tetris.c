@@ -37,14 +37,14 @@ bool L[4][4][4] =
     },
     {
         {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
+        {1, 0, 0, 0},
+        {1, 1, 1, 0},
         {0, 0, 0, 0}
     },
     {
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
+        {0, 1, 1, 0},
+        {0, 1, 0, 0},
+        {0, 1, 0, 0},
         {0, 0, 0, 0}
     }
 };
@@ -113,29 +113,8 @@ int main()
     // Set base collisions
     for(int i = 0; i < 16; i++)
     {
-        grid[i][19] = true;
+        grid[20][i] = true;
     }
-
-    for(int i = 0; i < 21; i++)
-    {
-        grid[0][i] = true;
-    }
-
-    // Test
-    /*for(int x = 0; x < 4; x++)
-    {
-        for(int y = 0; y < 4; y++)
-        {
-            if(L[x][y])
-            {
-                testRect.x = (4 + x) * 50;
-                testRect.y = (4 + y) * 50;
-
-                SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, 255, 255, 255));
-            }
-        }
-    }*/
-
 
     bool isRunning = true;
     bool isFalling = true;
@@ -155,6 +134,24 @@ int main()
             }
         }
 
+        // Rotation
+        if(keys[SDL_SCANCODE_J])
+        {
+            currentRotation += 1;
+            if(currentRotation >= 4)
+            {
+                currentRotation = 0;
+            }
+        }
+        else if(keys[SDL_SCANCODE_H])
+        {
+            currentRotation -= 1;
+            if(currentRotation < 0)
+            {
+                currentRotation = 3;
+            }
+        }
+
         // Check collision
         bool canMoveLeft = true;
         bool canMoveRight = true;
@@ -165,24 +162,7 @@ int main()
                 int realX = currentBlock->x + x;
                 int realY = currentBlock->y + y;
 
-                if(!grid[realX + 1][realY])
-                {
-                    canMoveRight = true;
-                }
-                else
-                {
-                    canMoveRight = false;
-                }
-                if(!grid[realX - 1][ realY])
-                {
-                    canMoveLeft = true;
-                }
-                else
-                {
-                    canMoveLeft = false;
-                }
-
-                if(grid[realX][realY + 1])
+                if(grid[realY + 1][realX])
                 {
                     isFalling = false;
                     goto RENDER;
@@ -190,11 +170,11 @@ int main()
             }
         }
 
-        if(keys[SDL_SCANCODE_D] && canMoveRight && canMoveLeft)
+        if(keys[SDL_SCANCODE_D] && canMoveRight)
         {
             currentBlock->x += 1;
         }
-        else if(keys[SDL_SCANCODE_A] && canMoveLeft && canMoveRight)
+        else if(keys[SDL_SCANCODE_A] && canMoveLeft)
         {
             currentBlock->x -= 1;
         }
@@ -211,7 +191,7 @@ int main()
             {
                 for(int y = 0; y < 4; y++)
                 {
-                    if(currentBlock->squares[y][x][currentRotation])
+                    if(currentBlock->squares[currentRotation][y][x])
                     {
                         testRect.x = (currentBlock->x + x) * 50;
                         testRect.y = (currentBlock->y + y) * 50;
@@ -227,14 +207,14 @@ int main()
             {
                 for(int y = 0; y < 4; y++)
                 {
-                    if(currentBlock->squares[x][y])
+                    if(currentBlock->squares[currentRotation][y][x])
                     {
                         testRect.x = (currentBlock->x + x) * 50;
                         testRect.y = (currentBlock->y + y) * 50;
                             
-                        SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
+                        //SDL_FillRect(blocks, &testRect, SDL_MapRGB(screen->format, currentBlock->r, currentBlock->g, currentBlock->b));
 
-                        grid[currentBlock->x + x][currentBlock->y + y] = true;
+                        //grid[currentBlock->x + x][currentBlock->y + y] = true;
                     }
                 }
             }
